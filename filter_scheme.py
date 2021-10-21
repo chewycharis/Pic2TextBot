@@ -1,8 +1,6 @@
 import cv2
 import numpy as np 
 import pytesseract as ts
-from matplotlib import pyplot as plt 
-
 
 ## should work for regular text and fb messages ## 
 
