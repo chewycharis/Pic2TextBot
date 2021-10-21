@@ -1,6 +1,5 @@
 """
-This is a tutorial from 
-https://vcokltfre.dev/tutorial/
+reference: https://vcokltfre.dev/tutorial/
 """
 
 import os
