@@ -1,4 +1,4 @@
-reviese filtering scheme to deal with texts of different colors.
+revise filtering scheme to deal with texts of different colors.
 include object detection with tensorflow models. 
 
 

@@ -12,7 +12,6 @@ class cog_commands(commands.Cog):
     def __init__(self,bot:commands.Bot):
         self.bot=bot
         self.last_msg=None
-        self.last_attachment=None
         self.channels={"testingInPeace":886391513469288492 , "Pic2Text":884494740748402710}
         self.current_channel=self.channels["testingInPeace"]
 
@@ -21,28 +20,41 @@ class cog_commands(commands.Cog):
         await ctx.send("Hello World!")
         
     @commands.command(name="interpret")
-    async def convertMessage (self,ctx:commands.Context):
-        if self.last_attachment ==[] or self.last_attachment ==None:
+    async def convertMessage (self,ctx:commands.Context,msgID:int=None):
+        if msgID:
+            ctx.message = await ctx.fetch_message(msgID)
+
+        url=await self.hasImage(ctx.message)
+        if not url:
             await ctx.send("There is no picture to interpret!")
         else:
-            temp=self.last_attachment[:]
-            url=self.last_attachment[0].url
             out1=pic2text(url)
             await ctx.send("This is the converted output using tesseract...\n")
             await ctx.send(out1)
-            self.last_attachment=temp
     
     @commands.command(name="interpret2")
-    async def convertMessage2 (self,ctx:commands.Context):
-        if self.last_attachment ==[] or self.last_attachment ==None:
+    async def convertMessage2 (self,ctx:commands.Context,msgID:int=None):
+        if msgID:
+            ctx.message = await ctx.fetch_message(msgID)
+
+        url=await self.hasImage(ctx.message)
+        if not url:
             await ctx.send("There is no picture to interpret!")
         else:
-            temp=self.last_attachment[:]
-            url=self.last_attachment[0].url
-            out2=pic2text(url,filter=True)
-            await ctx.send("This is the converted output with a black and white text filter using tesseract...\n")
-            await ctx.send(out2)
-            self.last_attachment=temp
+            out1=pic2text(url,filter=True)
+            await ctx.send("This is the converted output filtering for black and white text using tesseract...\n")
+            await ctx.send(out1)
+
+    @commands.Cog.listener("on_message")
+    async def hasImage(self, message:discord.Message):
+        channel=message.channel
+        attachments=message.attachments
+        picFormats=["png","jpg","jpeg"]
+        if attachments!=[]:
+            url=attachments[0].url
+            if any([picFormat in url[-4:].lower() for picFormat in picFormats]): 
+                return url
+        return None
     
     @commands.command(name="quote")
     async def goodreadsQuotes(self, ctx:commands.Context,*args):
@@ -53,6 +65,43 @@ class cog_commands(commands.Cog):
         else:
             out=randomQuote("happiness")
         await ctx.send(out)
+    
+    @commands.Cog.listener("on_message")
+    async def giveup(self, message:discord.Message):
+        channel=message.channel
+        isBot=message.author.bot
+        if "give up" in message.content.lower() and not isBot:
+            await channel.send("Never give up! You can do this!")
+
+    @commands.Cog.listener("on_message")
+    async def hug(self, message:discord.Message):
+        channel=message.channel
+        olduser=message.author            
+
+        if "hug me" in message.content.lower():
+            await channel.send("Would you like a hug?")
+            try:
+                reaction = await self.bot.wait_for('message',timeout=30.0,check=lambda message: message.author == olduser)
+                if reaction.content.lower().startswith("y"):
+                    await channel.send('Sending hugs your way... \n')
+                    await channel.send("https://tenor.com/view/mochi-peachcat-mochi-peachcat-hug-pat-gif-19092449")
+                elif reaction.content.lower().startswith("n"):
+                    await channel.send('No hugs for you then.')
+                else:
+                    await channel.send("I don't get what you mean")
+
+            except asyncio.TimeoutError:
+                await channel.send("Sending you a hug anyway")
+                await channel.send("https://tenor.com/view/mochi-peachcat-mochi-peachcat-hug-pat-gif-19092449")
+
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member:discord.Member):
+        channel = self.bot.get_channel(self.current_channel)
+        if not channel:
+            return
+        await channel.send(f"Welcome, {member.mention}!")
+
 
     @commands.command(name="allcommands")
     async def allcommands(self,ctx:commands.Context):
@@ -79,44 +128,6 @@ class cog_commands(commands.Cog):
         embed.add_field(name="!Commands", value=commands_descript, inline=False)
         embed.add_field(name="Hidden Commands", value=hidden_commands_descript, inline=False)
         await channel.send(embed=embed)
-    
-    @commands.Cog.listener()
-    async def on_message(self, message:discord.Message):
-        self.last_attachment = message.attachments
-        channel=message.channel
-        olduser=message.author 
-
-        ### give up ###
-        if "give up" in message.content.lower():
-            await channel.send("Never! You can do this!")
-            
-
-        ### hugs ###
-        if "hug me" in message.content.lower():
-            await channel.send("Would you like a hug?")
-            try:
-                reaction = await self.bot.wait_for('message',timeout=30.0,check=lambda message: message.author == olduser)
-                if reaction.content.lower().startswith("y"):
-                    await channel.send('Sending hugs your way... \n')
-                    await channel.send("https://tenor.com/view/mochi-peachcat-mochi-peachcat-hug-pat-gif-19092449")
-                elif reaction.content.lower().startswith("n"):
-                    await channel.send('No hugs for you then.')
-                else:
-                    await channel.send("I don't get what you mean")
-
-            except asyncio.TimeoutError:
-                await channel.send("Sending you a hug anyway")
-                await channel.send("https://tenor.com/view/mochi-peachcat-mochi-peachcat-hug-pat-gif-19092449")
-
-
-    @commands.Cog.listener()
-    async def on_member_join(self, member:discord.Member):
-        channel = self.bot.get_channel(self.current_channel)
-        if not channel:
-            return
-        await channel.send(f"Welcome, {member.mention}!")
-
-
 
 
 
